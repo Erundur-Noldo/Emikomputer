@@ -1,0 +1,119 @@
+/- CALCULATES SHIT -/
+
+#module 0 input
+#module 1 output
+#module f stack
+
+
+
+/- get the two numbers -/
+input
+cpy mdo acu
+
+input
+cpy mdo opr
+
+
+
+
+/- COMMENTED OUT
+/- calculates the numbers added -/
+brn tru add
+-/
+
+/- COMMENTED OUT
+/- calculates the numbers subtracted -/
+brn tru subtract
+-/
+
+/- calculates the numbers multiplied -/
+brn tru multiply
+
+
+
+
+/- prints the calculated number -/
+cpy rg4 mdi
+output
+
+stp
+
+
+
+
+
+
+
+/- the following operations take the bytes in the accumulator and operand
+then stores the result of the operation in rg4 -/
+~add
+   cpy acu rg4
+   add
+   swp acu rg4
+   ret
+
+
+~subtract
+   cpy acu rg4
+   sub
+   swp acu rg4
+   ret
+
+
+~multiply
+/-
+we're gonna shift the first number, constantly checking whether
+the highest bit is on, and if so, add the second number to the
+running total, then shift it
+-/
+
+
+   cpy acu rg4
+   cpy zro acu /- one cycle faster than writing -/
+
+   wrt ctr 07
+   ~multiply_loop
+
+      lsh /- left shift the running result -/
+      swp acu rg4
+      lrt /- left rotate the operand -/
+      swp acu rg4
+
+      /- if the currently most significant bit of the operand is on,
+      then we want to add the second operand to the running result -/
+      jmp !les multiply_skip_adding
+         add
+      ~multiply_skip_adding
+
+      cnt multiply_loop
+
+   swp acu rg4
+   lrt /- rotate the operand one more time as to keep it in the same state it started -/
+   ret
+
+
+/-
+this *also* stores the remainder in rg5
+-/
+
+/- NOT DONE YET !!!
+
+~divide_and_modulo
+   cpy acu rg4
+   cpy opr rg5
+
+   /- calculate how much we have to shift -/
+   log
+   swp acu opr
+   log
+   swp acu opr
+   sub
+
+   cpy acu ctr
+   cpy 
+   ~divide_shift_loop
+
+      cnt divide_shift_loop
+
+   /- we now have how many times we have to lshift the operand -/
+-/
