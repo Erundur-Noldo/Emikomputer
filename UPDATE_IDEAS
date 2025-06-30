@@ -1,0 +1,20 @@
+an instruction to have the ALU be activated without updating flags
+
+ALU modes I might wanna add and replace something else by them, or expand the ALU somehow:
+
+add with carry
+sub with borrow
+inverted sub (b-a instead of a-b)
+inverted sub with borrow
+multiplication (high 8 bits)
+multiplication (low 8 bits)
+
+
+
+improve the code :3
+make the assembler less shitty
+rewrite the module functions to better represent the redesigned module communication protocol
+
+write more programs in assembly :v
+
+write a compiler!! :o

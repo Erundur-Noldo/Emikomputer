@@ -1,0 +1,105 @@
+EMIKASSEMBLY FOR 6.1
+
+COMMENTS
+comments are entered with /- and exited with -/
+you can nest comments
+for example:
+
+/- comment /- also a comment 
+      /- still
+          a
+           comment
+   -/ still a comment
+-/ -/ not a comment anymore
+
+
+
+
+MODULE DEFINITIONS
+each program shall start with a list of module definitions:
+#module [number of module] [name you give to the module]
+
+for example:
+#module 0 stdin
+to check or change what modules are located where, take a look at the module_config file
+
+
+
+POINTER DEFINITIONS
+if you want to jump somewhere in the program, you need to define a pointer
+you start with a tilde (~) and then the name of the pointer
+for example:
+~multiply
+
+
+
+
+
+
+INSTRUCTIONS
+
+each instruction starts with one of these (lowercase is a string literal, uppercase refers to a set of options):
+
+   stp
+   wrt REG DIG DIG
+   cpy REG REG
+   swp REG REG
+   cmp ALU
+   jmp FLG LBL_NAME
+   brn FLG LBL_NAME
+   ret
+   cnt LBL_NAME
+   ALU
+   MOD_NAME +DIG +DIG
+
+note that for an ALU instruction, only the mode has to be written
+for a module operation, you just write the name of the module and then zero, one, or two digits
+the amount determines the mode and the digits are the arguments
+
+
+
+
+
+DIG:
+a hex digit. 0-f
+when two come in succession, they may or may not be seperated by whitespace
+
+
+REG:
+either 'rgX' where X is the number of the register
+or:
+   acu opr mdi mdo
+   -   -   -   -
+   -   -   -   -
+   -   ctr flg zro
+
+   (the ones with a - don't have a special name)
+
+
+ALU:
+   add sub inc dec
+   bng orr and xor
+   lsh rsh lrt rrt
+   ang lng log pas
+
+FLG:
+   before any, you can add a '!' to 'negate' the flag
+
+   tru eqq les grt
+   odd los mdf sof
+
+   some flags also have 'negated names'
+
+   fls neq geq leq
+   evn -   -   -
+
+   these negated names may even be inverted (!neq) if you insist for some reason
+
+
+LBL_NAME:
+   any name of a label defined somewhere in the program
+
+MOD_NAME:
+   any name of a module defined at the start of the program
+
+

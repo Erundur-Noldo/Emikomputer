@@ -1,0 +1,271 @@
+EMIKOMPUTER 6.1
+
+
+Emikomputer 6.1 is a CPU I designed :v
+
+It's Harvard architecture, rather than Von Neumann, I'm pretty sure
+data is 8-bit, instructions are 4-bit
+
+
+it's components are:
+
+a control unit
+16 registers
+an ALU
+a port to an instruction memory module
+16 ports to general modules
+
+
+
+
+INSTRUCTIONS:
+   there are 16 instructions, 3 of which are 'no operation' to leave myself some room to expand
+
+   there are various types of operands. Every operand is technically an operation, four bits, but in the assembly language, they're treated differently
+   hex
+      a hex digit representing a number
+   reg
+      a register
+   mde
+      an ALU mode
+   flg
+      a flag to determine conditional jumping or branching
+      the three least significant bits determine which flag is used, the most significant bit 'inverts' the truth value. If 0x01 is 'is equal to', then 0x81 is 'is unequal to'
+   ptr_ptr
+      this is two seperate instructions which are together one instruction, namely, a pointer for the instruction memory to jump/branch to
+   mdi
+      module index
+
+
+
+
+   0 stp
+      stops the program
+   1 wrt reg hex hex
+      stores the number 'hex hex' in the provided register
+   2 cpy reg reg
+      copies the value in the first register to the second
+   3 swp reg reg
+      swaps the values in the registers
+
+   4 alu mde
+      activates the ALU with the provided operation
+   5 cmp mde
+      activates the ALU with the provided operation, but doesn't store the result in the accumulator. It *does* update the flags
+   6 nop (placeholder)
+   7 nop (placeholder)
+
+   8 jmp flg ptr_ptr
+      if the flag is true, sets the top of the call stack to the index in 'ptr_ptr'
+      otherwise, does nothing
+   9 brn flg ptr_ptr
+      if the flag is true, pushes the index in 'ptr_ptr' to the call stack
+      otherwise, does nothing
+   a ret
+      pops the call stack, effectively returning control to whence was last branched
+   b cnt ptr_ptr
+      decrements register#d, the counter
+      jumps to ptr_ptr if *after* that decrementing, the resulting value is 0. otherwise, does nothing
+
+   c nop
+   d md0 mdi
+      sends a md0 instruction to the module
+      (see below)
+   e md1 mdi hex
+      sends a md1 instruction to the module with argument 'hex'
+      (see below)
+   f md2 mdi hex hex
+      sends a md2 instruction to the module with arguments 'hex' and 'hex' (in order)
+      (see below)
+
+
+
+
+
+REGISTERS
+   there are 16 registers
+   each register is 8 bits in size
+
+   the special registers are:
+
+   rg0/acu:
+      the accumulator. When the ALU performs an operation, this is the 'primary input', and the result of the operation is stored here
+   rg1/opr
+      the operand. When the ALU performs an operation, this is the 'secondary input'
+   rg2/mdi
+      module input. When a module is activated, the value of this register is the 'data' provided to the module
+   rg3/mdo
+      module output. When a module is activated and the data it returns is to be stored, it's stored here
+   rg4-rgc are plain registers with no special function
+   rgd/ctr
+      counter. This is the register used for the 'cnt' instruction
+   rge/flg
+      flags. The flags used for jumping and branching are stored here
+   rgf/zro
+      zero. This register always contains '0' and can't be written to in any way
+
+FLAGS
+   there are eight flags, all stored in rge/flg. Each bit is a seperate flag, this is from least significant bit to most significant bit
+
+   tru
+      'true'
+      always true
+   eqq
+      'equals'
+      true if the result of the previous ALU operation was 0
+   les
+      'less than'
+      true if the result of the previous ALU operation was less than 0/if the most significant bit was on
+   grt
+      'greater than'
+      true if the result of the previous ALU operation was greater than 0
+   odd
+      'odd'
+      true if the result of the previous ALU operation was odd/if the least significant bit was on
+   los
+      'loss'
+      true if the previous ALU operation was:
+         'add' and there was a carry
+         'sub' and there was a borrow
+         'lsh' or 'rsh' and the bit that was shifted away was on 
+         'log' and the input was 0
+   mdf
+      'module failure'
+      true if the previous module operation returned a 'failure'
+   sof
+      'stack overflow'
+      true if the call stack of the instruction memory has overflown during the execution of the program
+      ((I'm not sure whether I've implemented this yet))
+
+
+ALU OPERATIONS
+   there are 16 ALU operations
+   whenever an operation is performed, it takes it primary operand from rg0, and its secondary one from rg1. The result is written to rg0, overwriting the value previously there
+   I'll add the C equivalent of the operation by each, with the first operand being 'a' and the second one being 'b'
+      0 add | adding a+b
+      1 sub | subtracting a-b
+      2 inc | incrementing a+1
+      3 dec | decrementing a-1
+
+      4 bng | bitwise negation ~a
+      5 orr | bitwise or a|b
+      6 and | bitwise and a&b
+      7 xor | bitwise xor a^b
+
+      8 lsh | left-shifting (by one) a<<1
+      9 rsh | right-shifting (by one) a>>1
+      a lrt | left-rotate (by one) (a<<1) + !!(a & 0x80)
+      b rrt | right-rotate (by one) (a>>1) + ((a & 0x01)<<7)
+
+      c ang | arithmetic negation -a
+      d lng | logical negation !a
+      e log | logarithm [see below]
+      f pas | pass a
+
+      C equivalent of log:
+         int i=7;
+         while(i >= 0 && a >> i == 0) i--;
+         result = i;
+         break;
+
+         in other words:
+         the logarithm of a with base 2, rounded down, and if the input was '0', then '-1' or '255'
+
+
+
+
+
+
+
+MODULES
+   
+   modules are used for input, output, and data storage
+   if you can come up with a module that does something else, that would work too I guess
+   every module works through the 'module communication protocol'
+
+   A module has 18 bits of input, and 11 bits of output
+
+   INPUT:
+      two that determine the operation
+         00: nothing
+         01: md0
+         02: md1
+
+      eight that contain data
+         this the the byte stored in register 2, the module input
+
+      four for the first argument
+
+      four for the second argument
+
+
+   OUTPUT:
+      one to tell the CPU the module is done
+
+      one to tell the CPU the operation was successful
+         if this bit is off, the mdf flag is put on
+
+      one to tell the CPU whether to store the returned data
+         on: store
+         off: ignore
+
+      eight to contain the 'returned data' byte
+         if the 'store' bit is on, this is stored into md3, the module output
+
+
+
+   A LIST OF CURRENTLY AVAILABLE MODULES:
+
+      Out1:
+         md0:
+            displays the data byte (in the emulator, prints to the terminal)
+         md1:
+            nothing
+         md2:
+            nothing
+
+
+
+      Out256:
+         a 16x16 monochrome screen
+
+         md0:
+            yyyyxxxx is the location of the pixel
+            swap the on/off-ness of the pixel
+         md1:
+            yyyyxxxx is the location of the pixel
+            set the pixel to black if argument is 0, to white otherwise
+         md2:
+            nothing
+
+
+
+      Stack256
+         a stack to store data (of 8 bits in width)
+
+         md0: 
+            perform action determined by mode
+         md1:
+            arg = 0: set mode to 'push'
+            arg = 1: set mode to 'pop'
+            arg = 2: set mode to 'peek'
+            arg = 4: push once
+            arg = 5: pop once
+            arg = 6: peek once
+         md2: nothing
+
+
+
+      In1
+
+         md0: 
+            waits for the user to input one byte and returns that to the CPU (in the emulator: type in one byte written in two hex digits)
+         md1: 
+            nothing
+         md2: 
+            nothing
+ 
+
+
+
+
